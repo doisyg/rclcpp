@@ -63,65 +63,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_link_libraries(component_container_mt "stdc++fs")
 endif()
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  find_package(ament_cmake_google_benchmark REQUIRED)
-  find_package(benchmark REQUIRED)
-  # Give cppcheck hints about macro definitions coming from outside this package
-  get_target_property(ament_cmake_cppcheck_ADDITIONAL_INCLUDE_DIRS benchmark::benchmark INTERFACE_INCLUDE_DIRECTORIES)
-  ament_lint_auto_find_test_dependencies()
-
-  set(components "")
-  add_library(test_component SHARED test/components/test_component.cpp)
-  target_include_directories(test_component PUBLIC include)
-  ament_target_dependencies(test_component
-    "class_loader"
-    "rclcpp")
-  #rclcpp_components_register_nodes(test_component "test_rclcpp_components::TestComponent")
-  set(components "${components}test_rclcpp_components::TestComponentFoo;$<TARGET_FILE:test_component>\n")
-  set(components "${components}test_rclcpp_components::TestComponentBar;$<TARGET_FILE:test_component>\n")
-  set(components "${components}test_rclcpp_components::TestComponentNoNode;$<TARGET_FILE:test_component>\n")
-
-  # A properly formed resource only has one ';', this is used to catch an invalid resource entry
-  set(invalid_components "test_rclcpp_components::TestComponentFoo;;$<TARGET_FILE:test_component>\n")
-
-  file(GENERATE
-    OUTPUT
-    "${CMAKE_CURRENT_BINARY_DIR}/test_ament_index/$<CONFIG>/share/ament_index/resource_index/rclcpp_components/${PROJECT_NAME}"
-    CONTENT "${components}")
-
-  file(GENERATE
-    OUTPUT
-    "${CMAKE_CURRENT_BINARY_DIR}/test_ament_index/$<CONFIG>/share/ament_index/resource_index/rclcpp_components/invalid_${PROJECT_NAME}"
-    CONTENT "${invalid_components}")
-
-  set(append_library_dirs "${CMAKE_CURRENT_BINARY_DIR}")
-  if(WIN32)
-    set(append_library_dirs "${append_library_dirs}/$<CONFIG>")
-  endif()
-
-  ament_add_gtest(test_component_manager test/test_component_manager.cpp
-    APPEND_ENV AMENT_PREFIX_PATH=${CMAKE_CURRENT_BINARY_DIR}/test_ament_index/$<CONFIG>
-    APPEND_LIBRARY_DIRS "${append_library_dirs}")
-  if(TARGET test_component_manager)
-    target_link_libraries(test_component_manager component_manager)
-  endif()
-
-  ament_add_gtest(test_component_manager_api test/test_component_manager_api.cpp
-    APPEND_ENV AMENT_PREFIX_PATH=${CMAKE_CURRENT_BINARY_DIR}/test_ament_index/$<CONFIG>
-    APPEND_LIBRARY_DIRS "${append_library_dirs}")
-  if(TARGET test_component_manager_api)
-    target_link_libraries(test_component_manager_api component_manager)
-  endif()
-
-  ament_add_google_benchmark(benchmark_components
-    test/benchmark/benchmark_components.cpp
-    APPEND_ENV AMENT_PREFIX_PATH=${CMAKE_CURRENT_BINARY_DIR}/test_ament_index/$<CONFIG>
-    APPEND_LIBRARY_DIRS "${append_library_dirs}")
-  if(TARGET benchmark_components)
-    target_link_libraries(benchmark_components component_manager)
-  endif()
-endif()
 
 install(
   TARGETS component_manager EXPORT component_manager
